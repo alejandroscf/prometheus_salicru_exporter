@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from prometheus_client import start_http_server, Summary, Gauge
+from prometheus_client import start_http_server, Summary, Gauge, Info
 import random
 import time
 import requests
@@ -14,6 +14,43 @@ url_data='https://eqx-sun.salicru.com/api/plants/'+config.plant
 # Create a metric to track time spent and requests made.
 REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
 
+metrics = {
+    'plant_data' : {},
+    'id' : 'plant_data',
+    'name' : 'plant_data',
+    'address' : 'plant_data',
+    'latitude' : 'plant_data',
+    'longitude' : 'plant_data',
+    'type' : 'plant_data',
+    'capacity' : Gauge('salicru_capacity', 'Photovoltaic field power in kWp'),
+    'lastUpdated' : Gauge('salicru_lastUpdated', 'Timestamp of last update (NOT true)'),
+    'lastEdit' : Gauge('salicru_lastEdit', 'Timestamp of last modification'),
+    'generation': Gauge('salicru_generation', 'generation = 0'),
+    'consumption': Gauge('salicru_consumption', 'Instant - plant - consumption in kW'),
+    'selfConsumption': Gauge('salicru_selfConsumption', 'Daily - self - consumption in kWh'),
+    'dailyGeneration': Gauge('salicru_dailyGeneration', 'Daily - total - generation in kWh'),
+    'powerDailyGeneration': Gauge('salicru_powerDailyGeneration', 'Instant - solar - generation in kW'),
+    'dailyConsumption': Gauge('salicru_dailyConsumption', 'Daily - total - consumption (grid+solar) in kWh'),
+    'powerDailyConsumption': Gauge('salicru_powerDailyConsumption', 'powerDailyConsumption = consumption in kW'),
+    'export': Gauge('salicru_export', 'Daily - export - generation in kWh'),
+    'import': Gauge('salicru_import', 'Daily - import - consumption in kWh'),
+    'co2': Gauge('salicru_co2', 'CO2 compensation in kg'),
+    'treeCompensation': Gauge('salicru_treeCompensation', 'Tree compensation'),
+    'moneySavingByGeneration': Gauge('salicru_moneySavingByGeneration', 'moneySavingByGeneration'),
+    'moneySavingCompensation': Gauge('salicru_moneySavingCompensation', 'moneySavingCompensation'),
+    'battery': Gauge('salicru_battery', 'battery = 0'),
+    'gridPower': Gauge('salicru_gridPower', 'Instant - grid import(+)/export(-) in kW'),
+    'gridEnergy': Gauge('salicru_gridEnergy', 'gridEnergy = 0'),
+    'profit': Gauge('salicru_profit', 'profit'),
+    'outputPower': Gauge('salicru_outputPower', 'Instant - solar - generation in kW'),
+    'autarkicFee': Gauge('salicru_autarkicFee', 'autarkicFee'),
+    'selfConsumptionPercentage': Gauge('salicru_selfConsumptionPercentage', 'selfConsumptionPercentage'),
+    'isUpdated': Gauge('salicru_isUpdated', 'isUpdated'),
+    'isAnyDeviceOutdated': Gauge('salicru_isAnyDeviceOutdated', 'isAnyDeviceOutdated'),
+    'connectStatus': Gauge('salicru_connectStatus', 'connectStatus'),
+    'isZeroInjectionEnabled': Gauge('salicru_isZeroInjectionEnabled', 'isZeroInjectionEnabled'),
+    'isZeroInjectionApplied': Gauge('salicru_isZeroInjectionApplied', 'isZeroInjectionApplied'),
+}
 #outputPower
 GENERATION = Gauge('generated_kW', 'Solar generation in kW')
 #gridPower
@@ -26,11 +63,20 @@ def get_data(headers):
     r = requests.get(url_data, headers=headers)
     if (r.status_code == 200):
         #print(r.json())
-        print(r.json()['data']['lastUpdated'])
-        print(r.json()['data']['outputPower'])
-        print(r.json()['data']['gridPower'])
+        #print(r.json()['data']['lastUpdated'])
+        #print(r.json()['data']['outputPower'])
+        #print(r.json()['data']['gridPower'])
         GENERATION.set(float(r.json()['data']['outputPower']))
         CONSUMPTION.set(float(r.json()['data']['gridPower']))
+        for key, value in r.json()['data'].items():
+            if key in metrics:
+                #print((key, value))
+                if (metrics[key] == 'plant_data'):
+                    metrics['plant_data'][key] = value
+                else: 
+                    #metrics[key] = Gauge(key, "Value of " + key + " in Salicru API")
+                    metrics[key].set(float(value))
+        #Info('plant_data', "Plant data").info(metrics['plant_data'])
     else:
         print('Get failed')
         if (r.status_code >= 400 and r.status_code < 500):
@@ -55,12 +101,13 @@ def login():
 if __name__ == '__main__':
     headers = login()
     while (headers == None):
-        # API refresh freq = 2 min
+        # API refresh freq = 1 min
         time.sleep(60+random.random()*5)
         headers = login()
 
     # Start up the server to expose the metrics.
     start_http_server(9887)
+    #start_http_server(9888)
 
     # Get the the data
     while True:
