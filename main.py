@@ -51,6 +51,7 @@ metrics = {
     'isZeroInjectionEnabled': Gauge('salicru_isZeroInjectionEnabled', 'isZeroInjectionEnabled'),
     'isZeroInjectionApplied': Gauge('salicru_isZeroInjectionApplied', 'isZeroInjectionApplied'),
 }
+PLANT_DATA = Info('plant_data', "Plant data")
 #outputPower
 GENERATION = Gauge('generated_kW', 'Solar generation in kW')
 #gridPower
@@ -60,24 +61,9 @@ CONSUMPTION = Gauge('consumed_kW', 'Plant consumption in kW')
 @REQUEST_TIME.time()
 def get_data(headers):
     """Get the data from salicru 'api'."""
+    #TODO catch exception when connection fail due to dns or similar
     r = requests.get(url_data, headers=headers)
-    if (r.status_code == 200):
-        #print(r.json())
-        #print(r.json()['data']['lastUpdated'])
-        #print(r.json()['data']['outputPower'])
-        #print(r.json()['data']['gridPower'])
-        GENERATION.set(float(r.json()['data']['outputPower']))
-        CONSUMPTION.set(float(r.json()['data']['gridPower']))
-        for key, value in r.json()['data'].items():
-            if key in metrics:
-                #print((key, value))
-                if (metrics[key] == 'plant_data'):
-                    metrics['plant_data'][key] = value
-                else: 
-                    #metrics[key] = Gauge(key, "Value of " + key + " in Salicru API")
-                    metrics[key].set(float(value))
-        #Info('plant_data', "Plant data").info(metrics['plant_data'])
-    else:
+    if (r.status_code != 200):
         print('Get failed')
         if (r.status_code >= 400 and r.status_code < 500):
             print('Trying to reauth')
@@ -88,11 +74,32 @@ def get_data(headers):
             time.sleep(5+random.random()*5)
         r = requests.get(url_data, headers=headers)
 
+    if (r.status_code == 200):
+        #print(r.json())
+        print(r.json()['data']['lastUpdated'])
+        print(r.json()['data']['outputPower'])
+        print(r.json()['data']['gridPower'])
+        GENERATION.set(float(r.json()['data']['outputPower']))
+        CONSUMPTION.set(float(r.json()['data']['gridPower']))
+        for key, value in r.json()['data'].items():
+            if key in metrics:
+                #print((key, value))
+                if (metrics[key] == 'plant_data'):
+                    metrics['plant_data'][key] = value
+                else: 
+                    #TODO handel None values
+                    if value is None:
+                        print(r.json())
+                    else:
+                        metrics[key].set(float(value))
+        PLANT_DATA.info(metrics['plant_data'])
+
 def login():
     """Do login and return header with auth"""
     r = requests.post(url_login, data=login_data)
     if (r.status_code == 200):
         headers = { 'Authorization': 'Bearer ' + r.json()['data']['token'] }
+        print('Auth succeded')
         return headers
     else:
         print('Auth failed')
@@ -101,13 +108,14 @@ def login():
 if __name__ == '__main__':
     headers = login()
     while (headers == None):
-        # API refresh freq = 1 min
+        # API refresh freq = 2 min
         time.sleep(60+random.random()*5)
         headers = login()
 
     # Start up the server to expose the metrics.
-    start_http_server(9887)
-    #start_http_server(9888)
+    #start_http_server(9887)
+    start_http_server(9888)
+    print('Server started')
 
     # Get the the data
     while True:
