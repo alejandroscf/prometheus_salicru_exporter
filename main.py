@@ -11,6 +11,9 @@ login_data={"email":config.username,"password":config.password,"appVersion":"web
 url_login='https://eqx-sun.salicru.com/api/users/login'
 url_data='https://eqx-sun.salicru.com/api/plants/'+config.plant
 
+server_port=9887
+#server_port=9889
+
 # Create a metric to track time spent and requests made.
 REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
 
@@ -113,9 +116,8 @@ if __name__ == '__main__':
         headers = login()
 
     # Start up the server to expose the metrics.
-    #start_http_server(9887)
-    start_http_server(9888)
-    print('Server started')
+    start_http_server(server_port)
+    print('Server started at 0.0.0.0:' + str(server_port))
 
     # Get the the data
     while True:
