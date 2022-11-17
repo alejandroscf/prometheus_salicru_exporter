@@ -4,12 +4,15 @@ import random
 import time
 import requests
 import config
+#import json
 
 # Credentials
 login_data={"email":config.username,"password":config.password,"appVersion":"web"}
 
-url_login='https://eqx-sun.salicru.com/api/users/login'
-url_data='https://eqx-sun.salicru.com/api/plants/'+config.plant
+#url_login='https://eqx-sun.salicru.com/api/users/login'
+url_login='https://new-equinox.salicru.com/users/login'
+#url_data='https://eqx-sun.salicru.com/api/plants/'+config.plant
+url_data='https://new-equinox.salicru.com/plants/'+config.new_plant+'/realTime'
 
 server_port=9887
 #server_port=9889
@@ -68,6 +71,7 @@ def get_data(headers):
     r = requests.get(url_data, headers=headers)
     if (r.status_code != 200):
         print('Get failed')
+        print(r.status_code)
         if (r.status_code >= 400 and r.status_code < 500):
             print('Trying to reauth')
             time.sleep(1+random.random()*1)
@@ -85,7 +89,7 @@ def get_data(headers):
         #print(r.json()['data']['gridPower'])
         #GENERATION.set(float(r.json()['data']['outputPower']))
         #CONSUMPTION.set(float(r.json()['data']['gridPower']))
-        for key, value in r.json()['data'].items():
+        for key, value in r.json().items():
             if key in metrics:
                 #print((key, value))
                 if (metrics[key] == 'plant_data'):
@@ -96,17 +100,20 @@ def get_data(headers):
                         print(r.json())
                     else:
                         metrics[key].set(float(value))
-        PLANT_DATA.info(metrics['plant_data'])
+        #TODO get this data from another get
+        #PLANT_DATA.info(metrics['plant_data'])
 
 def login():
     """Do login and return header with auth"""
-    r = requests.post(url_login, data=login_data)
+    r = requests.post(url_login, json=login_data)
     if (r.status_code == 200):
-        headers = { 'Authorization': 'Bearer ' + r.json()['data']['token'] }
+        headers = { 'Authorization': 'Bearer ' + r.json()['token'] }
         print('Auth succeded')
+        #print(headers)
         return headers
     else:
         print('Auth failed')
+        print(r)
         return None
         
 if __name__ == '__main__':
