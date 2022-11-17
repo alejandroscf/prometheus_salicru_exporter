@@ -79,11 +79,12 @@ def get_data(headers):
 
     if (r.status_code == 200):
         #print(r.json())
-        print(r.json()['data']['lastUpdated'])
+        print("fetch OK!")
+        #print(r.json()['data']['lastUpdated'])
         #print(r.json()['data']['outputPower'])
-        print(r.json()['data']['gridPower'])
+        #print(r.json()['data']['gridPower'])
         #GENERATION.set(float(r.json()['data']['outputPower']))
-        CONSUMPTION.set(float(r.json()['data']['gridPower']))
+        #CONSUMPTION.set(float(r.json()['data']['gridPower']))
         for key, value in r.json()['data'].items():
             if key in metrics:
                 #print((key, value))
