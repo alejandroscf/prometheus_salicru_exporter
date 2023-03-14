@@ -9,10 +9,18 @@ import config
 # Credentials
 login_data={"email":config.username,"password":config.password,"appVersion":"web"}
 
+#url_base='https://eqx-sun.salicru.comi/api'
+#url_base='https://new-equinox.salicru.com'
+url_base='https://equinox.salicru.com/api'
+#url_base='http://34.160.181.48/api'
+
 #url_login='https://eqx-sun.salicru.com/api/users/login'
-url_login='https://new-equinox.salicru.com/users/login'
+#url_login='https://new-equinox.salicru.com/users/login'
+url_login = url_base + '/users/login'
+
 #url_data='https://eqx-sun.salicru.com/api/plants/'+config.plant
-url_data='https://new-equinox.salicru.com/plants/'+config.new_plant+'/realTime'
+#url_data='https://new-equinox.salicru.com/plants/'+config.new_plant+'/realTime'
+url_data = url_base + '/plants/' + config.new_plant + '/realTime'
 
 server_port=9887
 #server_port=9889
