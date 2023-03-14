@@ -1,3 +1,4 @@
 username = "#YOUR EMAIL#"
 password = "#YOUR PASSWORD#"
-plant = "#YOUR PLANT ID#"
+#plant = "#YOUR PLANT ID#"
+new_plant = "#YOUR NEW PLANT ID#"

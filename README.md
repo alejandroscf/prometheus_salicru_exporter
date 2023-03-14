@@ -17,7 +17,7 @@ pip install prometheus-client
 cp config.py.sample config.py
 vim config.py
 ```
-You can find the plant ID in the URL of the [Salicru dashboard](https://eqx-sun.salicru.com). 
+You can find the plant ID in the URL of the [Salicru dashboard](https://eqinox.salicru.com). 
 
 # Deployment
 
