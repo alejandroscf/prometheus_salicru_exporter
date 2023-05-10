@@ -86,7 +86,7 @@ def get_data(headers):
         if (r.status_code >= 400 and r.status_code < 500):
             print('Trying to reauth')
             time.sleep(1+random.random()*1)
-            headers = login()
+            headers['Authorization'] = login()['Authorization']
         else:
             print('Waiting a bit')
             time.sleep(5+random.random()*5)
