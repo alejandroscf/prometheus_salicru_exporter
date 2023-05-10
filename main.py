@@ -22,6 +22,8 @@ url_login = url_base + '/users/login'
 #url_data='https://new-equinox.salicru.com/plants/'+config.new_plant+'/realTime'
 url_data = url_base + '/plants/' + config.new_plant + '/realTime'
 
+url_config = url_base + '/plants/' + config.new_plant
+
 server_port=9887
 #server_port=9889
 
@@ -113,6 +115,33 @@ def get_data(headers):
                         metrics[key].set(float(value))
         #TODO get this data from another get
         #PLANT_DATA.info(metrics['plant_data'])
+    else:
+        print('Get failed')
+        print(r.status_code)
+
+def setZeroInjection(headers, status=False):
+    """Set inverter to Zero Injection mode"""
+    payload = { 'isZeroInjectionEnabled' : status }
+    headers['Content-Type'] = 'application/json'
+    r = requests.patch(url_config, json=payload, headers=headers)
+    if (r.status_code != 200):
+        print('Patch failed')
+        print(r.status_code)
+        if (r.status_code >= 400 and r.status_code < 500):
+            print('Trying to reauth')
+            time.sleep(1+random.random()*1)
+            headers['Authorization'] = login()['Authorization']
+        else:
+            print('Waiting a bit')
+            time.sleep(5+random.random()*5)
+        r = requests.patch(url_config, payload, headers=headers)
+
+    if (r.status_code == 200):
+        #print(r.json())
+        print("patch OK!")
+    else:
+        print('Patch failed')
+        print(r.status_code)
 
 def login():
     """Do login and return header with auth"""
@@ -133,6 +162,9 @@ if __name__ == '__main__':
         # API refresh freq = 2 min
         time.sleep(60+random.random()*5)
         headers = login()
+
+#    setZeroInjection(headers, status=False)
+#    exit()
 
     # Start up the server to expose the metrics.
     start_http_server(server_port)
