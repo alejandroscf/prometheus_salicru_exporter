@@ -2,7 +2,7 @@
 
 It pulls data from the Salicru EQX-SUN API and exposes in [localhost:9887](http://localhost:9887)
 
-Still a WIP
+Also handle Zero Injection mode
 
 # Installation
 
@@ -17,7 +17,7 @@ pip install prometheus-client
 cp config.py.sample config.py
 vim config.py
 ```
-You can find the plant ID in the URL of the [Salicru dashboard](https://eqinox.salicru.com). 
+You can find the plant ID in the URL of the [Salicru dashboard](https://eqx-sun.salicru.com). 
 
 # Deployment
 
