@@ -4,6 +4,7 @@ import random
 import time
 import requests
 import config
+import sys
 #import json
 
 # Credentials
@@ -156,6 +157,14 @@ def login():
         print(r)
         return None
         
+def usage():
+    print("Usage: " + sys.argv[0] + "[option]")
+    print("   --server                 (default) Start server to monitor")
+    print("   --enable-zero-injection  Enable Zero Injection and exit")
+    print("   --disable-zero-injection Disable Zero Injection and exit")
+    print("   --help                   Print this help and exit")
+    print()
+    
 if __name__ == '__main__':
     headers = login()
     while (headers == None):
@@ -163,6 +172,29 @@ if __name__ == '__main__':
         time.sleep(60+random.random()*5)
         headers = login()
 
+    if len(sys.argv[1:]) > 0:
+        args = sys.argv[1:]
+#        match args[0]:
+#            case "-s":
+#                pass
+#            case "--enable-zero-injection"
+#                setZeroInjection(headers, status=True)
+#                exit()
+#            case "--disable-zero-injection"
+#                setZeroInjection(headers, status=False)
+#                exit()
+        if args[0] == "--server":
+            pass
+        elif args[0] == "--enable-zero-injection":
+            setZeroInjection(headers, status=True)
+            exit()
+        elif args[0] == "--disable-zero-injection":
+            setZeroInjection(headers, status=False)
+            exit()
+        elif args[0] == "--help":
+            usage()
+            exit()
+            
 #    setZeroInjection(headers, status=False)
 #    exit()
 
