@@ -67,7 +67,10 @@ def program_inverter(proc_data, threshold=0.0025):
 
 
 def set_zero_inyection(status, hour):
-    command = "echo './main.py --set-zero-injection'|at " + hour 
+    if status:
+        command = "echo './main.py --enable-zero-injection'|at " + hour
+    else:
+        command = "echo './main.py --disable-zero-injection'|at " + hour 
     print(command)
     os.system(command)
 
