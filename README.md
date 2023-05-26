@@ -2,13 +2,14 @@
 
 It pulls data from the Salicru EQX-SUN API and exposes in [localhost:9887](http://localhost:9887)
 
-Also handle Zero Injection mode
+Also handle Zero Injection mode automatically from OMIE prices
 
 # Installation
 
 ```
 git clone https://github.com/alejandroscf/prometheus_salicru_exporter
 pip install prometheus-client
+apt install at
 ```
 
 # Configuration
@@ -24,6 +25,17 @@ You can find the plant ID in the URL of the [Salicru dashboard](https://eqx-sun.
 Run main.py
 
 TODO: `systemd` unit file
+
+# Automatic zero injection for Spain
+
+File `calc_price.py` allow you to program zero injection when IDX price will be negative (you pay for injecting energy into the grid).
+It takes tomorrow price from OMIE (Spanish Regulator) API, published at 13:00.
+Procces it to calculate the aproximate selling price and program with `at` command to enable and disable inverter's zero injection mode.
+
+Add a cron entry like this:
+```
+ 15 15  *   *   *    /usr/src/prometheus_salicru_exporter/calc_price.py
+```
 
 # Sample Output
 

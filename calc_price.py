@@ -7,6 +7,8 @@ omie_base_url = "https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdb
 omie_file_prefix = "marginalpdbc_" 
 omie_file_sufix = ".1" 
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 sobrecoste_desvios = 0.00131
 #Se deberia descargar de esios liquicomun pero no parece estar a priori, media aproximada
 sobrecoste_banda_secundaria = 0.0025
@@ -68,9 +70,9 @@ def program_inverter(proc_data, threshold=0.0025):
 
 def set_zero_inyection(status, hour):
     if status:
-        command = "echo './main.py --enable-zero-injection'|at " + hour
+        command = "echo '" + dir_path + "/main.py --enable-zero-injection'|at " + hour
     else:
-        command = "echo './main.py --disable-zero-injection'|at " + hour 
+        command = "echo '" + dir_path + "/main.py --disable-zero-injection'|at " + hour 
     print(command)
     os.system(command)
 
