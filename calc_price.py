@@ -6,6 +6,7 @@ import os
 omie_base_url = "https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdbc&filename="
 omie_file_prefix = "marginalpdbc_" 
 omie_file_sufix = ".1" 
+omie_file_2nd_sufix = ".2" 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -19,11 +20,11 @@ sobrecoste_bono_social = 0.00147
 factor_chanchullo = 0.0
 sobrecoste = sobrecoste_desvios + sobrecoste_banda_secundaria + sobrecoste_factor_potencia + sobrecoste_coste_os + sobrecoste_bono_social + factor_chanchullo
 
-def get_omie_data():
+def get_omie_data(sufix=omie_file_sufix):
 
     tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y%m%d")
 
-    omie_file = omie_file_prefix + tomorrow + omie_file_sufix
+    omie_file = omie_file_prefix + tomorrow + sufix
 
     omie_url = omie_base_url + omie_file
 
@@ -47,6 +48,9 @@ def get_omie_data():
                 date = str(int(data[3])-1) + ':00' + ' ' + data[0] + '-' + data[1] + '-' + data[2]
                 prices[date] =  float(data[5])/1000
 
+        if len(prices) == 0 and sufix == omie_file_sufix:
+            return get_omie_data(sufix=omie_file_2nd_sufix)
+            
         return prices
     else:
         return None
@@ -77,7 +81,7 @@ def set_zero_inyection(status, hour):
     os.system(command)
 
 omie_data = get_omie_data()
-#print(omie_data)
+print(omie_data)
 proc_data = procces_data(omie_data)
 #print(proc_data)
 program_inverter(proc_data)
