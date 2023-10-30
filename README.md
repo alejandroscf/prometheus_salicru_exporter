@@ -29,8 +29,8 @@ TODO: `systemd` unit file
 # Automatic zero injection for Spain
 
 File `calc_price.py` allow you to program zero injection when IDX price will be negative (you pay for injecting energy into the grid).
-It takes tomorrow price from OMIE (Spanish Regulator) API, published at 13:00.
-Procces it to calculate the aproximate selling price and program with `at` command to enable and disable inverter's zero injection mode.
+
+It takes tomorrow price from OMIE (Spanish Regulator) API, published at 13:00. Then procces it to calculate the aproximate selling price and program with `at` command to enable and disable inverter's zero injection mode.
 
 Add a cron entry like this:
 ```
