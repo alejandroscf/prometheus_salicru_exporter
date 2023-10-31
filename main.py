@@ -25,6 +25,10 @@ url_data = url_base + '/plants/' + config.new_plant + '/realTime'
 
 url_config = url_base + '/plants/' + config.new_plant
 
+glob = {}
+glob['isZeroInjectionEnabled'] = None
+glob['isZeroInjectionApplied'] = None
+
 server_port=9887
 #server_port=9889
 
@@ -80,6 +84,8 @@ CONSUMPTION = Gauge('consumed_kW', 'Plant consumption in kW')
 # Decorate function with metric.
 @REQUEST_TIME.time()
 def get_data(headers):
+    #print("headers")
+    #print(headers)
     """Get the data from salicru 'api'."""
     #TODO catch exception when connection fail due to dns or similar
     r = requests.get(url_data, headers=headers)
@@ -114,6 +120,10 @@ def get_data(headers):
                         print(r.json())
                     else:
                         metrics[key].set(float(value))
+                    if key == 'isZeroInjectionApplied':
+                        glob['isZeroInjectionApplied'] = value
+                    elif key == 'isZeroInjectionEnabled':
+                        glob['isZeroInjectionEnabled'] = value
         #TODO get this data from another get
         #PLANT_DATA.info(metrics['plant_data'])
     else:
@@ -122,7 +132,10 @@ def get_data(headers):
 
 def setZeroInjection(headers, status=False):
     """Set inverter to Zero Injection mode"""
+    print('Setting Zero Injection mode to ' + str(int(status)))
     payload = { 'isZeroInjectionEnabled' : status }
+    #print("Headers: ")
+    #print(headers)
     headers['Content-Type'] = 'application/json'
     r = requests.patch(url_config, json=payload, headers=headers)
     if (r.status_code != 200):
@@ -143,6 +156,18 @@ def setZeroInjection(headers, status=False):
     else:
         print('Patch failed')
         print(r.status_code)
+
+def ensureZeroInjection(headers):
+    #print("iz0enable")
+    #print(glob['isZeroInjectionEnabled'])
+    #print("iz0applie")
+    #print(glob['isZeroInjectionApplied'])
+    #print("headers")
+    #print(headers)
+    if glob['isZeroInjectionApplied'] != glob['isZeroInjectionEnabled'] :
+        print('Mode not applied')
+        setZeroInjection(headers,glob['isZeroInjectionEnabled'])
+    
 
 def login():
     """Do login and return header with auth"""
@@ -205,4 +230,5 @@ if __name__ == '__main__':
     # Get the the data
     while True:
         get_data(headers)
+        ensureZeroInjection(headers)
         time.sleep(30)
