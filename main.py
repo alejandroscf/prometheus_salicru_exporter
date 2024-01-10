@@ -12,7 +12,8 @@ login_data={"email":config.username,"password":config.password,"appVersion":"web
 
 #url_base='https://eqx-sun.salicru.comi/api'
 #url_base='https://new-equinox.salicru.com'
-url_base='https://equinox.salicru.com/api'
+#url_base='https://equinox.salicru.com/api'
+url_base='https://api.equinox.salicru.com'
 #url_base='http://34.160.181.48/api'
 
 #url_login='https://eqx-sun.salicru.com/api/users/login'
