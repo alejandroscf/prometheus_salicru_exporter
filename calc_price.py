@@ -49,6 +49,7 @@ def get_omie_data(sufix=omie_file_sufix):
                 prices[date] =  float(data[5])/1000
 
         if len(prices) == 0 and sufix == omie_file_sufix:
+            print("empty/missing file. Trying 2nd sufix")
             return get_omie_data(sufix=omie_file_2nd_sufix)
             
         return prices
