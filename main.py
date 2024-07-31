@@ -31,22 +31,22 @@ glob['isZeroInjectionEnabled'] = None
 glob['isZeroInjectionApplied'] = None
 
 server_port=9887
-#server_port=9889
+#server_port=9888
 
 # Create a metric to track time spent and requests made.
 REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
 
 metrics = {
-    'plant_data' : {},
-    'id' : 'plant_data',
-    'name' : 'plant_data',
-    'address' : 'plant_data',
-    'latitude' : 'plant_data',
-    'longitude' : 'plant_data',
-    'type' : 'plant_data',
-    'capacity' : Gauge('salicru_capacity', 'Photovoltaic field power in kWp'),
-    'lastUpdated' : Gauge('salicru_lastUpdated', 'Timestamp of last update (NOT true)'),
-    'lastEdit' : Gauge('salicru_lastEdit', 'Timestamp of last modification'),
+    'plant_data': {},
+    'id': 'plant_data',
+    'name': 'plant_data',
+    'address': 'plant_data',
+    'latitude': 'plant_data',
+    'longitude': 'plant_data',
+    'type': 'plant_data',
+    'capacity': Gauge('salicru_capacity', 'Photovoltaic field power in kWp'),
+    'lastUpdated': Gauge('salicru_lastUpdated', 'Timestamp of last update (NOT true)'),
+    'lastEdit': Gauge('salicru_lastEdit', 'Timestamp of last modification'),
     'generation': Gauge('salicru_generation', 'generation = 0'),
     'consumption': Gauge('salicru_consumption', 'Instant - plant - consumption in kW'),
     'selfConsumption': Gauge('salicru_selfConsumption', 'Daily - self - consumption in kWh'),
@@ -55,9 +55,7 @@ metrics = {
     'dailyConsumption': Gauge('salicru_dailyConsumption', 'Daily - total - consumption (grid+solar) in kWh'),
     'powerDailyConsumption': Gauge('salicru_powerDailyConsumption', 'Instant - load - consumption in kW'),
     'powerSelfConsumption': Gauge('salicru_powerSelfConsumption', 'powerSelfConsumption = powerDailyConsumption'),
-    #'export': Gauge('salicru_export', 'Daily - export - generation in kWh'),
     'exportEnergy': Gauge('salicru_exportEnergy', 'Daily - export - generation in kWh'),
-    #'import': Gauge('salicru_import', 'Daily - import - consumption in kWh'),
     'importEnergy': Gauge('salicru_importEnergy', 'Daily - import - consumption in kWh'),
     'co2': Gauge('salicru_co2', 'CO2 compensation in kg'),
     'treeCompensation': Gauge('salicru_treeCompensation', 'Tree compensation'),
@@ -85,51 +83,51 @@ CONSUMPTION = Gauge('consumed_kW', 'Plant consumption in kW')
 # Decorate function with metric.
 @REQUEST_TIME.time()
 def get_data(headers):
-    #print("headers")
-    #print(headers)
     """Get the data from salicru 'api'."""
-    #TODO catch exception when connection fail due to dns or similar
-    r = requests.get(url_data, headers=headers)
-    if (r.status_code != 200):
-        print('Get failed')
-        print(r.status_code)
-        if (r.status_code >= 400 and r.status_code < 500):
+    # Set all Gauge metrics to NaN at the start
+    for key, metric in metrics.items():
+        if isinstance(metric, Gauge):
+            metric.set(float('nan'))
+
+    try:
+        r = requests.get(url_data, headers=headers)
+        r.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f'Get failed: {e}')
+        if isinstance(e, requests.exceptions.HTTPError) and 400 <= e.response.status_code < 500:
             print('Trying to reauth')
-            time.sleep(1+random.random()*1)
+            time.sleep(1 + random.random() * 1)
             headers['Authorization'] = login()['Authorization']
         else:
             print('Waiting a bit')
-            time.sleep(5+random.random()*5)
-        r = requests.get(url_data, headers=headers)
+            time.sleep(5 + random.random() * 5)
+        try:
+            r = requests.get(url_data, headers=headers)
+            r.raise_for_status()
+        except requests.exceptions.RequestException:
+            print('Get failed again')
+            return
 
-    if (r.status_code == 200):
-        #print(r.json())
-        print("fetch OK!")
-        #print(r.json()['data']['lastUpdated'])
-        #print(r.json()['data']['outputPower'])
-        #print(r.json()['data']['gridPower'])
-        #GENERATION.set(float(r.json()['data']['outputPower']))
-        #CONSUMPTION.set(float(r.json()['data']['gridPower']))
-        for key, value in r.json().items():
-            if key in metrics:
-                #print((key, value))
-                if (metrics[key] == 'plant_data'):
-                    metrics['plant_data'][key] = value
-                else: 
-                    #TODO handel None values
-                    if value is None:
-                        print(r.json())
-                    else:
+    print("fetch OK!")
+    data = r.json()
+    
+    for key, value in data.items():
+        if key in metrics:
+            if metrics[key] == 'plant_data':
+                metrics['plant_data'][key] = value
+            else:
+                if value is not None:
+                    try:
                         metrics[key].set(float(value))
-                    if key == 'isZeroInjectionApplied':
-                        glob['isZeroInjectionApplied'] = value
-                    elif key == 'isZeroInjectionEnabled':
-                        glob['isZeroInjectionEnabled'] = value
-        #TODO get this data from another get
-        #PLANT_DATA.info(metrics['plant_data'])
-    else:
-        print('Get failed')
-        print(r.status_code)
+                    except ValueError:
+                        print(f"Invalid value for {key}: {value}")
+                        metrics[key].set(float('nan'))
+                else:
+                    metrics[key].set(float('nan'))
+                if key == 'isZeroInjectionApplied':
+                    glob['isZeroInjectionApplied'] = value
+                elif key == 'isZeroInjectionEnabled':
+                    glob['isZeroInjectionEnabled'] = value
 
 def setZeroInjection(headers, status=False):
     """Set inverter to Zero Injection mode"""
