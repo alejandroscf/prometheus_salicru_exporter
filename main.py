@@ -8,7 +8,14 @@ import sys
 #import json
 
 # Credentials
-login_data={"email":config.username,"password":config.password,"appVersion":"web"}
+login_data={
+    "email": config.username,
+    "password": config.password,
+    "redirect": "false",
+    "csrfToken": None,
+    "callbackUrl": "https://equinox.salicru.com/login",
+    "json": "true"
+}
 
 #url_base='https://eqx-sun.salicru.comi/api'
 #url_base='https://new-equinox.salicru.com'
@@ -18,7 +25,13 @@ url_base='https://api.equinox.salicru.com'
 
 #url_login='https://eqx-sun.salicru.com/api/users/login'
 #url_login='https://new-equinox.salicru.com/users/login'
-url_login = url_base + '/users/login'
+#url_login = url_base + '/users/login'
+
+url_session = 'https://equinox.salicru.com/api/auth/session'
+
+url_csfr = 'https://equinox.salicru.com/api/auth/csrf'
+
+url_credentials = 'https://equinox.salicru.com/api/auth/callback/credentials'
 
 #url_data='https://eqx-sun.salicru.com/api/plants/'+config.plant
 #url_data='https://new-equinox.salicru.com/plants/'+config.new_plant+'/realTime'
@@ -90,19 +103,39 @@ def get_data(headers):
             metric.set(float('nan'))
 
     try:
-        r = requests.get(url_data, headers=headers)
+        #url_session
+        r = headers['s'].get(url_session)
+        if (r.status_code == 200):
+            print('Session')
+            print(r.json())
+
+        #/users/me
+        print('https://api.equinox.salicru.com/users/me')
+        print(headers['s'].cookies.get_dict()['raw-token'])
+        #s.headers.update({'Authorization': 'Bearer ' + s.cookies.get_dict()['raw-token'] })
+        r = requests.get('https://api.equinox.salicru.com/users/me', headers={'authorization': 'Bearer ' + headers['s'].cookies.get_dict()['raw-token'] })
+        r.raise_for_status()
+        print(r.json())
+
+        r = headers['s'].get(url_data)
         r.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f'Get failed: {e}')
         if isinstance(e, requests.exceptions.HTTPError) and 400 <= e.response.status_code < 500:
             print('Trying to reauth')
             time.sleep(1 + random.random() * 1)
-            headers['Authorization'] = login()['Authorization']
+            new_headers = login()
+            if new_headers:
+                headers['s'] = new_headers['s']
+                #print(new_headers['s'])
+            else:
+                print('Failed to reauth')
+                return
         else:
             print('Waiting a bit')
             time.sleep(5 + random.random() * 5)
         try:
-            r = requests.get(url_data, headers=headers)
+            r = headers['s'].get(url_data)
             r.raise_for_status()
         except requests.exceptions.RequestException:
             print('Get failed again')
@@ -169,17 +202,42 @@ def ensureZeroInjection(headers):
     
 
 def login():
-    """Do login and return header with auth"""
-    r = requests.post(url_login, json=login_data)
+    """Do login and return session object"""
+    s = requests.Session() 
+    #url_session
+    r = s.get(url_session)
+    if (r.status_code != 200):
+        print('Auth failed')
+        print(r)
+        return None
+
+    #url_csfr
+    r = s.get(url_csfr)
     if (r.status_code == 200):
-        headers = { 'Authorization': 'Bearer ' + r.json()['token'] }
-        print('Auth succeded')
-        #print(headers)
-        return headers
+        login_data['csrfToken'] = r.json()['csrfToken']
     else:
         print('Auth failed')
         print(r)
         return None
+
+    #url_credentials
+    r = s.post(url_credentials, json=login_data)
+    if (r.status_code != 200):
+        print('Auth failed')
+        print(r)
+        return None
+        
+    #url_session
+    r = s.get(url_session)
+    if (r.status_code == 200):
+        print('Auth succeded')
+        #print(r.json())
+
+    print(s.cookies.get_dict()['raw-token'])
+    #s.headers.update({'Authorization': 'Bearer ' + s.cookies.get_dict()['raw-token'] })
+
+    return {'s':s}
+
         
 def usage():
     print("Usage: " + sys.argv[0] + "[option]")
