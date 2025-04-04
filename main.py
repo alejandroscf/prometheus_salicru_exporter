@@ -104,20 +104,20 @@ def get_data(headers):
 
     try:
         #url_session
-        r = headers['s'].get(url_session)
-        if (r.status_code == 200):
-            print('Session')
-            print(r.json())
+        #r = headers['s'].get(url_session)
+        #if (r.status_code == 200):
+        #    print('Session')
+        #    print(r.json())
 
         #/users/me
-        print('https://api.equinox.salicru.com/users/me')
-        print(headers['s'].cookies.get_dict()['raw-token'])
+        #print('https://api.equinox.salicru.com/users/me')
+        #print(headers['s'].cookies.get_dict()['raw-token'])
         #s.headers.update({'Authorization': 'Bearer ' + s.cookies.get_dict()['raw-token'] })
-        r = requests.get('https://api.equinox.salicru.com/users/me', headers={'authorization': 'Bearer ' + headers['s'].cookies.get_dict()['raw-token'] })
-        r.raise_for_status()
-        print(r.json())
+        #r = headers['t'].get('https://api.equinox.salicru.com/users/me')
+        #r.raise_for_status()
+        #print(r.json())
 
-        r = headers['s'].get(url_data)
+        r = headers['t'].get(url_data)
         r.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f'Get failed: {e}')
@@ -127,6 +127,7 @@ def get_data(headers):
             new_headers = login()
             if new_headers:
                 headers['s'] = new_headers['s']
+                headers['t'] = new_headers['t']
                 #print(new_headers['s'])
             else:
                 print('Failed to reauth')
@@ -135,7 +136,7 @@ def get_data(headers):
             print('Waiting a bit')
             time.sleep(5 + random.random() * 5)
         try:
-            r = headers['s'].get(url_data)
+            r = headers['t'].get(url_data)
             r.raise_for_status()
         except requests.exceptions.RequestException:
             print('Get failed again')
@@ -169,18 +170,24 @@ def setZeroInjection(headers, status=False):
     #print("Headers: ")
     #print(headers)
     headers['Content-Type'] = 'application/json'
-    r = requests.patch(url_config, json=payload, headers=headers)
+    r = headers['t'].patch(url_config, json=payload)
     if (r.status_code != 200):
         print('Patch failed')
         print(r.status_code)
         if (r.status_code >= 400 and r.status_code < 500):
             print('Trying to reauth')
             time.sleep(1+random.random()*1)
-            headers['Authorization'] = login()['Authorization']
+            new_headers = login()
+            if new_headers:
+                headers['s'] = new_headers['s']
+                headers['t'] = new_headers['t']
+                #print(new_headers['s'])
+            else:
+                print('Failed to reauth')
         else:
             print('Waiting a bit')
             time.sleep(5+random.random()*5)
-        r = requests.patch(url_config, payload, headers=headers)
+        r = headers['t'].patch(url_config, json=payload)
 
     if (r.status_code == 200):
         #print(r.json())
@@ -203,7 +210,10 @@ def ensureZeroInjection(headers):
 
 def login():
     """Do login and return session object"""
+    # Session for login (https://equinox.salicru.com)
     s = requests.Session() 
+    # Session for data (https://api.equinox.salicru.com/)
+    t = requests.Session() 
     #url_session
     r = s.get(url_session)
     if (r.status_code != 200):
@@ -233,10 +243,23 @@ def login():
         print('Auth succeded')
         #print(r.json())
 
-    print(s.cookies.get_dict()['raw-token'])
+    #print(s.cookies.get_dict()['raw-token'])
     #s.headers.update({'Authorization': 'Bearer ' + s.cookies.get_dict()['raw-token'] })
+    headers = {
+        'User-Agent': 'curl/7.88.1',
+        'Accept': '*/*',
+        'Authorization': 'Bearer ' + s.cookies.get_dict()['raw-token'],
+    }
+    t.headers.update(headers)
 
-    return {'s':s}
+    #print(headers)
+    #r = t.get('https://api.equinox.salicru.com/users/me', headers=headers)
+    #r = requests.get('http://localhost:1234/me', headers=headers)
+
+    #print(r)
+    #print(r.json())
+
+    return {'s': s, 't': t}
 
         
 def usage():
