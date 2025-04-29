@@ -22,9 +22,47 @@ You can find the plant ID in the URL of the [Salicru dashboard](https://eqx-sun.
 
 # Deployment
 
-Run main.py
+# Installing as a Systemd Service
 
-TODO: `systemd` unit file
+Follow these steps to install the Prometheus Salicru Exporter as a systemd service that starts automatically at boot and restarts on failure:
+
+## 1. Create the systemd unit file
+
+Create a symlink at `/etc/systemd/system/prometheus-salicru-exporter.service` from the file `prometheus-salicru-exporter.service`.
+
+## 2. Set up the prometheus user
+
+If the 'prometheus' user doesn't already exist, create it and assign the proper permissions:
+
+```bash
+sudo useradd -r -s /bin/false prometheus
+sudo chown -R prometheus:prometheus /usr/src/prometheus_salicru_exporter
+```
+
+## 3. Enable and start the service
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable prometheus-salicru-exporter.service
+sudo systemctl start prometheus-salicru-exporter.service
+```
+
+## 4. Verify the service status
+
+```bash
+sudo systemctl status prometheus-salicru-exporter.service
+```
+
+## Security considerations
+
+The systemd service is configured with several security enhancements:
+
+- `NoNewPrivileges`: Prevents the service from gaining additional privileges
+- `ProtectSystem=full`: Mounts /usr, /boot, and /etc as read-only
+- `ProtectHome=true`: Makes home directories inaccessible to the service
+- `PrivateTmp=true`: Provides an isolated /tmp directory
+- `ReadWritePaths`: Explicitly allows write access only to necessary directories
+
 
 # Automatic zero injection for Spain
 

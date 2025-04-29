@@ -1,0 +1,24 @@
+
+[Unit]
+Description=Prometheus Salicru Exporter
+Documentation=https://github.com/alejandroscf/prometheus_salicru_exporter
+After=network.target
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+WorkingDirectory=/usr/src/prometheus_salicru_exporter
+ExecStart=/usr/bin/python3 /usr/src/prometheus_salicru_exporter/main.py
+Restart=on-failure
+RestartSec=5s
+
+# Opciones de seguridad recomendadas
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/usr/src/prometheus_salicru_exporter
+
+[Install]
+WantedBy=multi-user.target
